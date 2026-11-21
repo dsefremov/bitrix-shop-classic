@@ -6,7 +6,6 @@ import CartQuantity from './components/CartQuantity';
 import ConfirmSubmit from './components/ConfirmSubmit';
 import FilterPanel from './components/FilterPanel';
 import MobileMenu from './components/MobileMenu';
-import PaymentButtons from './components/PaymentButtons';
 import SearchBox from './components/SearchBox';
 import SortSelect from './components/SortSelect';
 
@@ -19,7 +18,6 @@ const registry: Record<string, ComponentType<any>> = {
     ConfirmSubmit,
     FilterPanel,
     MobileMenu,
-    PaymentButtons,
     SearchBox,
     SortSelect,
 };

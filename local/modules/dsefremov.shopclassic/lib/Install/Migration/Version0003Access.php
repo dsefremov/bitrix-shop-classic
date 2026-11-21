@@ -20,11 +20,20 @@ use Dsefremov\ShopClassic\Install\Migration;
  */
 final class Version0003Access implements Migration
 {
-    /** @var array<string, string> модуль => право */
+    /** @var array<string, string> модуль => право (буквенные права модуля) */
     public const array MODULE_RIGHTS = [
         'iblock' => 'R',
-        'catalog' => 'W',
         'sale' => 'U',
+    ];
+
+    /**
+     * Модули с правами-задачами (b_group_task): catalog проверяет операции (catalog_price, catalog_store…),
+     * а не букву. catalog_price_edit — цены, остатки, скидки; без настроек модуля и импорта/экспорта.
+     *
+     * @var array<string, string> модуль => задача
+     */
+    public const array MODULE_TASKS = [
+        'catalog' => 'catalog_price_edit',
     ];
 
     public function name(): string
@@ -43,6 +52,9 @@ final class Version0003Access implements Migration
 
         foreach (self::MODULE_RIGHTS as $module => $right) {
             $APPLICATION->SetGroupRight($module, $groupId, $right);
+        }
+        foreach (self::MODULE_TASKS as $module => $task) {
+            \CGroup::SetModulePermission($groupId, $module, $task);
         }
 
         // Вход в /bitrix/admin: доступ к файлам раздела на чтение (/bitrix/.access.php), как это

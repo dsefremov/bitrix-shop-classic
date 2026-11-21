@@ -35,6 +35,11 @@ final class ManagerTest extends WebTestCase
             self::assertFalse($this->isAdminAuthForm(), 'Менеджеру открыто: '.$path);
             self::assertStringContainsString($needle, (string) $this->client->getInternalResponse()->getContent(), $path);
         }
+        // В форме товара есть вкладка «Торговый каталог» с ценой и остатком (задача catalog_price_edit).
+        $form = (string) $this->client->getInternalResponse()->getContent();
+        self::assertStringContainsString('>Торговый каталог<', $form);
+        self::assertStringContainsString('name="CAT_BASE_PRICE"', $form);
+        self::assertStringContainsString('name="CAT_BASE_QUANTITY"', $form);
     }
 
     public function testManagerHasNoAccessToUsersAndSettings(): void

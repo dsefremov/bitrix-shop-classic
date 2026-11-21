@@ -15,6 +15,7 @@ use Bitrix\Sale\Internals\PersonTypeTable;
 use Bitrix\Sale\Internals\StatusGroupTaskTable;
 use Bitrix\Sale\Internals\StatusTable;
 use Dsefremov\ShopClassic\Config;
+use Dsefremov\ShopClassic\Entity\Row;
 use Dsefremov\ShopClassic\Install\Installer;
 use Dsefremov\ShopClassic\Install\Migration\Version0003Access;
 
@@ -93,6 +94,10 @@ final class InstallerTest extends ServiceTestCase
         foreach (Version0003Access::MODULE_RIGHTS as $module => $right) {
             self::assertSame($right, $APPLICATION->GetGroupRight($module, [$groupId]), "Право на модуль {$module}.");
         }
+        $tasks = \Bitrix\Main\Application::getConnection()->query(
+            'SELECT T.NAME FROM b_group_task GT JOIN b_task T ON T.ID = GT.TASK_ID WHERE GT.GROUP_ID = '.$groupId." AND T.MODULE_ID = 'catalog'"
+        )->fetchAll();
+        self::assertSame(['catalog_price_edit'], array_map(static fn (array $row): string => Row::string($row, 'NAME'), $tasks), 'Торговый каталог: цены и остатки, без настроек модуля.');
         self::assertSame('D', $APPLICATION->GetGroupRight('main', [$groupId]), 'Главный модуль (пользователи, настройки) закрыт.');
         self::assertSame('W', \CIBlock::GetGroupPermissions(Config::iblockId())[$groupId] ?? null, 'Инфоблок «Товары» — изменение.');
         self::assertSame('R', $APPLICATION->GetFileAccessPermission([Config::SITE_ID, '/bitrix/admin/index.php'], [$groupId]), 'Вход в /bitrix/admin.');

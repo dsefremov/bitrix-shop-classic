@@ -81,26 +81,27 @@ final class CustomerTest extends WebTestCase
         self::assertSame("11\u{a0}980\u{a0}₽", $this->text('[data-testid="order-total"]'));
         self::assertStringContainsString('Комментарий: Позвонить заранее', $this->text('main'));
         self::assertSame(['quantity' => 1, 'reserved' => 2], $this->stock($productId), 'Товар зарезервирован.');
-        $buttons = $this->reactProps('PaymentButtons');
-        self::assertSame($orderPath, $buttons['action']);
-        self::assertFalse($buttons['declined']);
+        $form = $this->client->getCrawler()->filter('[data-testid="payment-form"]');
+        self::assertSame($orderPath, $form->attr('action'));
+        self::assertSame('Оплатить', $this->text('[data-testid="pay-button"]'));
+        $paymentId = (string) $form->filter('input[name="PAYMENT_ID"]')->attr('value');
 
-        $this->post($orderPath, ['STUB_RESULT' => 'fail', 'PAYMENT_ID' => $buttons['paymentId']]);
+        $this->client->submit($form->selectButton('Отказ')->form());
         $this->assertRedirect($orderPath);
         $this->followRedirect();
         self::assertSame(['Оплата отклонена. Можно попробовать ещё раз.'], $this->flashes('error'));
         self::assertSame('Принят', $this->text('[data-testid="order-status"]'));
         self::assertStringContainsString('Оплата отклонена', $this->text('[data-testid="payment-declined"]'));
-        self::assertTrue($this->reactProps('PaymentButtons')['declined']);
+        self::assertSame('Оплатить ещё раз', $this->text('[data-testid="pay-button"]'));
         self::assertSame(['quantity' => 1, 'reserved' => 2], $this->stock($productId), 'Резерв сохраняется после отказа.');
 
-        $this->post($orderPath, ['STUB_RESULT' => 'success', 'PAYMENT_ID' => $buttons['paymentId']]);
+        $this->post($orderPath, ['STUB_RESULT' => 'success', 'PAYMENT_ID' => $paymentId]);
         $this->assertRedirect($orderPath);
         $this->followRedirect();
         self::assertSame(['Оплата прошла успешно.'], $this->flashes('success'));
         self::assertSame('Оплачен', $this->text('[data-testid="order-status"]'));
         self::assertStringStartsWith("Оплачено 11\u{a0}980\u{a0}₽", $this->text('[data-testid="payment-paid"]'));
-        self::assertCount(0, $this->client->getCrawler()->filter('[data-react-component="PaymentButtons"]'));
+        self::assertCount(0, $this->client->getCrawler()->filter('[data-testid="payment-form"]'));
         self::assertTrue(Order::load($orderId)?->isPaid());
     }
 

@@ -23,6 +23,10 @@ namespace {
     {
     }
 
+    function bitrix_sessid_post(string $varname = 'sessid', bool $returnInvocationOnly = false): string
+    {
+    }
+
     function check_bitrix_sessid(string $varname = 'sessid'): bool
     {
     }
@@ -221,6 +225,10 @@ namespace {
 
         /** @return bool|object */
         public static function Delete(int|string $ID)
+        {
+        }
+
+        public static function SetModulePermission(int $group_id, string $module_id, int|string|false $permission): void
         {
         }
     }
