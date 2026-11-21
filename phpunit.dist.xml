@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PHPUnit: ядро Битрикса на базе bitrix_shop_classic_test (tests/bootstrap.php). Подготовка базы: docker/test-db.sh -->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd" bootstrap="tests/bootstrap.php" colors="true" cacheDirectory=".phpunit.cache" executionOrder="default" failOnRisky="true" failOnWarning="true" failOnDeprecation="true" failOnNotice="true" beStrictAboutOutputDuringTests="true" displayDetailsOnTestsThatTriggerDeprecations="true" displayDetailsOnTestsThatTriggerWarnings="true" displayDetailsOnTestsThatTriggerNotices="true">
+  <testsuites>
+    <testsuite name="unit">
+      <directory>tests/Unit</directory>
+    </testsuite>
+    <testsuite name="service">
+      <directory>tests/Service</directory>
+    </testsuite>
+    <testsuite name="functional">
+      <directory>tests/Functional</directory>
+    </testsuite>
+  </testsuites>
+  <source restrictNotices="true" restrictWarnings="true" ignoreIndirectDeprecations="true">
+    <include>
+      <directory>local/modules/dsefremov.shopclassic/lib</directory>
+    </include>
+  </source>
+</phpunit>
