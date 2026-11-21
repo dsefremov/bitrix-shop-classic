@@ -1,0 +1,71 @@
+# Корень сайта — корень репозитория (ядро /bitrix и /upload рядом, в git не попадают).
+# Второй сервер (TEST_HTTP_PORT) — тот же код на тестовой базе bitrix_shop_classic_test (HTTP-сценарии PHPUnit, e2e).
+# Служебные каталоги и файлы проекта наружу не отдаются.
+server {
+    listen ${HTTP_PORT};
+    server_name _;
+    root /var/www/app;
+    index index.php;
+    client_max_body_size 10m;
+    charset utf-8;
+
+    location ~ ^/(\.git|\.github|docker|tests|e2e|docs|node_modules|vendor|var|local/stubs|local/js/dsefremov\.shopclassic/src)(/|$) { return 404; }
+    location ~ /\.(?!well-known/|default/) { return 404; }  # служебные .файлы; каталоги шаблонов .default/ ядра — отдаются
+    location ~* \.(neon|json|lock|md|dist|xml|ya?ml|sh|sql|gz|ts|tsx|log)$ { return 404; }
+    location ~ ^/(bitrix|local)/.*/(\.settings\.php|\.settings_extra\.php)$ { return 404; }
+    location ~ ^/bitrix/(backup|managed_cache|stack_cache|php_interface/dbconn\.php) { return 404; }
+    location ~ ^/bitrix/cache/.*\.php$ { return 404; }
+    location ~ ^/upload/.*\.php$ { return 404; }
+
+    location / {
+        # Адреса разделов без завершающего слэша (/cart, /checkout) — сразу в index.php раздела, без 301.
+        if (-f $request_filename/index.php) {
+            rewrite ^(.*?)/?$ $1/index.php last;
+        }
+        try_files $uri $uri/ /bitrix/urlrewrite.php$is_args$args;
+    }
+
+    location ~ \.php$ {
+        try_files $uri /bitrix/urlrewrite.php =404;
+        fastcgi_pass 127.0.0.1:${FPM_PORT};
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param DOCUMENT_ROOT $document_root;
+        fastcgi_read_timeout 300;
+    }
+}
+
+server {
+    listen ${TEST_HTTP_PORT};
+    server_name _;
+    root /var/www/app;
+    index index.php;
+    client_max_body_size 10m;
+    charset utf-8;
+
+    location ~ ^/(\.git|\.github|docker|tests|e2e|docs|node_modules|vendor|var|local/stubs|local/js/dsefremov\.shopclassic/src)(/|$) { return 404; }
+    location ~ /\.(?!well-known/|default/) { return 404; }  # служебные .файлы; каталоги шаблонов .default/ ядра — отдаются
+    location ~* \.(neon|json|lock|md|dist|xml|ya?ml|sh|sql|gz|ts|tsx|log)$ { return 404; }
+    location ~ ^/(bitrix|local)/.*/(\.settings\.php|\.settings_extra\.php)$ { return 404; }
+    location ~ ^/bitrix/(backup|managed_cache|stack_cache|php_interface/dbconn\.php) { return 404; }
+    location ~ ^/bitrix/cache/.*\.php$ { return 404; }
+    location ~ ^/upload/.*\.php$ { return 404; }
+
+    location / {
+        # Адреса разделов без завершающего слэша (/cart, /checkout) — сразу в index.php раздела, без 301.
+        if (-f $request_filename/index.php) {
+            rewrite ^(.*?)/?$ $1/index.php last;
+        }
+        try_files $uri $uri/ /bitrix/urlrewrite.php$is_args$args;
+    }
+
+    location ~ \.php$ {
+        try_files $uri /bitrix/urlrewrite.php =404;
+        fastcgi_pass 127.0.0.1:${FPM_PORT};
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param DOCUMENT_ROOT $document_root;
+        fastcgi_param BX_DB_NAME bitrix_shop_classic_test;
+        fastcgi_read_timeout 300;
+    }
+}
