@@ -1,0 +1,53 @@
+# Ядро 1С-Битрикс и всё, что создаёт установка, — НЕ в git (репозиторий публичный)
+/bitrix/
+/upload/
+/bitrixsetup.php
+/*.tar.gz*
+/*.log
+/index.php
+/404.php
+/urlrewrite.php
+/.htaccess
+/.access.php
+/.top.menu.php
+/.left.menu.php
+/.section.php
+/favicon.ico
+/robots.txt
+/install.config
+/readme.html
+# Публичные страницы ставит модуль dsefremov.shopclassic (local/modules/dsefremov.shopclassic/install/public)
+/catalog/
+/cart/
+/checkout/
+/personal/
+/login/
+/register/
+/search/
+/auth/
+/include/
+/desktop_app/
+/mobileapp/
+/services/
+# Файлы с доступами и пароли: всё генерируется локально в var/ (docker/secrets.sh, мастер, fixtures)
+.settings.php
+!/local/modules/*/.settings.php
+.settings_extra.php
+dbconn.php
+.env
+.env.*
+/var/
+# Дампы
+*.sql
+!/docker/mysql/init.sql
+*.sql.gz
+/dumps/
+# Зависимости и артефакты
+/vendor/
+/node_modules/
+/local/js/dsefremov.shopclassic/dist/
+/test-results/
+/playwright-report/
+/.phpunit.cache/
+/.php-cs-fixer.cache
+docker/__pycache__/
