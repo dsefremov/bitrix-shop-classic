@@ -1,0 +1,89 @@
+# Локальное окружение Bitrix Shop Classic.
+# Все сервисы в network_mode: host — на машине разработки firewall режет трафик между
+# контейнерами в новых bridge-сетях, поэтому сервисы общаются через 127.0.0.1 и свои порты.
+# Порты по умолчанию: сайт 8096, тот же сайт на тестовой базе 8097, MySQL 33076, PHP-FPM 9078
+# (переопределяются HTTP_PORT, TEST_HTTP_PORT, DB_PORT, FPM_PORT).
+# Паролей в этом файле нет: пароли БД генерирует docker/secrets.sh в var/secrets (вне git),
+# MySQL читает их через *_PASSWORD_FILE, ядро — из bitrix/.settings_extra.php.
+name: bitrixshopclassic
+
+services:
+    php:
+        build:
+            context: ./docker/php
+            args:
+                PHP_VERSION: '${PHP_VERSION:-8.4}'
+                UID: '${UID:-1000}'
+                GID: '${GID:-1000}'
+        image: bitrixshopclassic-php:latest
+        network_mode: host
+        user: '${UID:-1000}:${GID:-1000}'
+        environment:
+            FPM_PORT: '${FPM_PORT:-9078}'
+            HTTP_PORT: '${HTTP_PORT:-8096}'
+            TEST_HTTP_PORT: '${TEST_HTTP_PORT:-8097}'
+            DB_PORT: '${DB_PORT:-33076}'
+            COMPOSER_HOME: /tmp/composer
+        volumes:
+            - '.:/var/www/app'
+        depends_on:
+            mysql:
+                condition: service_healthy
+
+    nginx:
+        image: nginx:1.27-alpine
+        network_mode: host
+        environment:
+            HTTP_PORT: '${HTTP_PORT:-8096}'
+            TEST_HTTP_PORT: '${TEST_HTTP_PORT:-8097}'
+            FPM_PORT: '${FPM_PORT:-9078}'
+            NGINX_ENVSUBST_FILTER: '^(HTTP_PORT|TEST_HTTP_PORT|FPM_PORT)$$'
+        volumes:
+            - './docker/nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro'
+            - '.:/var/www/app:ro'
+        depends_on:
+            - php
+
+    mysql:
+        image: 'mysql:${MYSQL_VERSION:-8.4}'
+        network_mode: host
+        command: ['--port=${DB_PORT:-33076}', '--mysqlx=OFF']
+        environment:
+            MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+            MYSQL_DATABASE: bitrix_shop_classic
+            MYSQL_USER: shop
+            MYSQL_PASSWORD_FILE: /run/secrets/db_password
+        secrets:
+            - db_root_password
+            - db_password
+        volumes:
+            - 'mysql-data:/var/lib/mysql'
+            - './docker/mysql/my.cnf:/etc/mysql/conf.d/bitrix.cnf:ro'
+            - './docker/mysql/init.sql:/docker-entrypoint-initdb.d/10-test-db.sql:ro'
+        healthcheck:
+            # ping не требует пароля: проверяется только, что сервер принимает соединения.
+            test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -P ${DB_PORT:-33076} --silent']
+            interval: 3s
+            timeout: 5s
+            retries: 60
+
+    # Сборка фронтенда (Vite), линтеры и тайпчек: docker compose run --rm node npm ...
+    node:
+        image: node:22
+        network_mode: host
+        user: '${UID:-1000}:${GID:-1000}'
+        working_dir: /var/www/app
+        environment:
+            npm_config_cache: /tmp/npm-cache
+        volumes:
+            - '.:/var/www/app'
+        profiles: ['tools']
+
+secrets:
+    db_root_password:
+        file: ./var/secrets/db-root-password
+    db_password:
+        file: ./var/secrets/db-password
+
+volumes:
+    mysql-data:

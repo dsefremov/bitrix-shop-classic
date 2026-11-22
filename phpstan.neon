@@ -1,0 +1,23 @@
+# PHPStan: собственный код /local и тесты. Ядра Битрикса в репозитории нет, его API описан
+# минимальными стабами local/stubs/{main,iblock,catalog,sale}.stub.php (одинаково локально и в CI).
+parameters:
+    level: max
+    phpVersion: 80400
+    paths:
+        - local
+        - tests
+    excludePaths:
+        - local/js
+        - local/stubs
+    scanFiles:
+        - local/stubs/main.stub.php
+        - local/stubs/iblock.stub.php
+        - local/stubs/catalog.stub.php
+        - local/stubs/sale.stub.php
+    bootstrapFiles:
+        - local/stubs/bootstrap.php
+    treatPhpDocTypesAsCertain: false
+    dynamicConstantNames:
+        - B_PROLOG_INCLUDED
+        - SITE_ID
+        - LANGUAGE_ID
